@@ -1,6 +1,3 @@
-import importlib.util
-if importlib.util.find_spec("b2sdk") is None:
-    %pip install b2sdk
 import b2sdk
 from b2sdk.v2 import InMemoryAccountInfo, B2Api
 import numpy as np
