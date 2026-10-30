@@ -108,3 +108,15 @@ def paired_t_test(column1, column2):
     except Exception as ex:
         print(f'Failed to calculate the p-value: {ex}')
         return np.nan
+
+# median
+def median(data):
+    try:
+        numeric_dataset = pd.to_numeric(pd.Series(data), errors='coerce').dropna().to_numpy()
+    except Exception as ex:
+        raise ValueError(f'Failed to convert input to float: {ex}')
+
+    if len(numeric_dataset) == 0:
+        raise ValueError("No valid numerical values found.")
+
+    return np.median(numeric_dataset)
