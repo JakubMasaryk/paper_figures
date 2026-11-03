@@ -120,3 +120,19 @@ def median(data):
         raise ValueError("No valid numerical values found.")
 
     return np.median(numeric_dataset)
+
+
+#iqr-based outlie removal
+def iqr_outlier_removal(data, factor= 1.5):
+    # Convert to numeric and remove invalid values
+    data = pd.to_numeric(pd.Series(data), errors='coerce').dropna()
+
+    # Calculate IQR bounds
+    Q1, Q3 = data.quantile([0.25, 0.75])
+    IQR = Q3 - Q1
+
+    lower = Q1 - factor * IQR
+    upper = Q3 + factor * IQR
+
+    # Remove outliers
+    return data[(data >= lower) & (data <= upper)]
