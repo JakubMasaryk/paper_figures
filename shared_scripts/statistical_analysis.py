@@ -136,3 +136,60 @@ def iqr_outlier_removal(data, factor= 1.5):
 
     # Remove outliers
     return data[(data >= lower) & (data <= upper)]
+
+
+#permutation test for K and alpha parameters
+def permutation_test_median(data, category_column, reference_group, tested_parameter, **kwargs):
+    # check the inputs
+    if not isinstance(data, pd.DataFrame):
+        raise TypeError('Input data must be a pandas DataFrame.')
+    if not isinstance(category_column, str):
+        raise TypeError('category_column must be a string.')
+    if category_column not in data.columns:
+        raise ValueError(f'Column "{category_column}" not found in DataFrame.')
+    if not isinstance(reference_group, str):
+        raise TypeError('reference_group must be a string.')
+    if reference_group not in data[category_column].unique():
+        raise ValueError(f'Reference group "{reference_group}" not found in "{category_column}".')
+    if not isinstance(tested_parameter, str):
+        raise TypeError('category_column must be a string.')
+    if tested_parameter not in data.columns:
+        raise ValueError(f'Column "{tested_parameter}" not found in DataFrame.')
+
+    # import the lib
+    from scipy.stats import permutation_test
+
+    # split the control from the dataset
+    control_data = data.loc[data[category_column] == reference_group, tested_parameter]
+    data = data.loc[data[category_column] != reference_group, [tested_parameter, category_column]]
+
+    # iterate over groups and perform the permutation test agains the control data
+    groups = []
+    p_values = []
+    for group in data[category_column].unique():
+        try:
+            tested_data = data.loc[data[category_column] == group, tested_parameter]
+            result = permutation_test((control_data, tested_data),
+                                      statistic=lambda x, y: np.median(x) - np.median(y),
+                                      permutation_type=kwargs.get('permutation_type', 'independent'),
+                                      alternative=kwargs.get('alternative', 'two-sided'),
+                                      n_resamples=kwargs.get('n_resamples', 100000),
+                                      random_state=kwargs.get('random_state', 42))
+            groups.append(group)
+            p_values.append(result.pvalue)
+
+        except Exception as ex:
+            print(f'failed to calculate the p-value for group {group}: {ex}')
+            groups.append(group)
+            p_values.append(np.NaN)
+
+    significance = pd.DataFrame({'group': groups,
+                                 'p_value': p_values})
+
+    # assign the significance symbols
+    significance = significance.assign(significance_symbol=np.where(significance.p_value < 0.001, '***',
+                                                                    np.where(significance.p_value < 0.01, '**',
+                                                                             np.where(significance.p_value < 0.05, '*',
+                                                                                      ''))))
+
+    return significance
