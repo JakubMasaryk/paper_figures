@@ -152,7 +152,7 @@ def permutation_test_median(data, category_column, reference_group, tested_param
     if reference_group not in data[category_column].unique():
         raise ValueError(f'Reference group "{reference_group}" not found in "{category_column}".')
     if not isinstance(tested_parameter, str):
-        raise TypeError('category_column must be a string.')
+        raise TypeError('tested_parameter must be a string.')
     if tested_parameter not in data.columns:
         raise ValueError(f'Column "{tested_parameter}" not found in DataFrame.')
 
@@ -161,6 +161,8 @@ def permutation_test_median(data, category_column, reference_group, tested_param
 
     # split the control from the dataset
     control_data = data.loc[data[category_column] == reference_group, tested_parameter]
+    if control_data.empty:
+        raise ValueError(f'Reference group "{reference_group}" contains no valid datapoints.')
     data = data.loc[data[category_column] != reference_group, [tested_parameter, category_column]]
 
     # iterate over groups and perform the permutation test agains the control data
@@ -207,8 +209,8 @@ def permutation_test_median(data, category_column, reference_group, tested_param
         if not kwargs.get('path'):
             raise ValueError("export path must be provided.")
         output_path = Path(kwargs.get('path'))
-        if not output_path.parent.exists():
-            raise FileNotFoundError(f"directory does not exist: {output_path}")
+        if not output_path.parent.is_dir():
+            raise FileNotFoundError(f"directory does not exist: {output_path.parent}")
         try:
             significance.to_csv(output_path, index=False, encoding='utf-8')
         except Exception as ex:
