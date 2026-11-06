@@ -191,10 +191,27 @@ def permutation_test_median(data, category_column, reference_group, tested_param
     significance = pd.DataFrame({'group': groups,
                                  'p_value': p_values})
 
+    print(f"Permutation test: {kwargs.get('permutation_type', 'independent')}, "
+          f"{kwargs.get('alternative', 'two-sided')}, "
+          f"number of resamples: {kwargs.get('n_resamples', 100000)}")
+
     # assign the significance symbols
     significance = significance.assign(significance_symbol=np.where(significance.p_value < 0.001, '***',
                                                                     np.where(significance.p_value < 0.01, '**',
                                                                              np.where(significance.p_value < 0.05, '*',
                                                                                       ''))))
+
+    ##export (avod re-runs of the permutation test function)
+    if kwargs.get('export', False):
+        from pathlib import Path
+        if not kwargs.get('path'):
+            raise ValueError("export path must be provided.")
+        output_path = Path(kwargs.get('path'))
+        if not output_path.parent.exists():
+            raise FileNotFoundError(f"directory does not exist: {output_path}")
+        try:
+            significance.to_csv(output_path, index=False, encoding='utf-8')
+        except Exception as ex:
+            raise OSError(f"Failed to export plot to '{kwargs.get('path')}': {ex}")
 
     return significance
