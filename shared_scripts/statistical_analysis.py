@@ -164,10 +164,12 @@ def permutation_test_median(data, category_column, reference_group, tested_param
     data = data.loc[data[category_column] != reference_group, [tested_parameter, category_column]]
 
     # iterate over groups and perform the permutation test agains the control data
+    import time
     groups = []
     p_values = []
     for group in data[category_column].unique():
         try:
+            start_time = time.perf_counter()
             tested_data = data.loc[data[category_column] == group, tested_parameter]
             result = permutation_test((control_data, tested_data),
                                       statistic=lambda x, y: np.median(x) - np.median(y),
@@ -177,6 +179,9 @@ def permutation_test_median(data, category_column, reference_group, tested_param
                                       random_state=kwargs.get('random_state', 42))
             groups.append(group)
             p_values.append(result.pvalue)
+
+            duration = (time.perf_counter() - start_time)/60
+            print(f'Group: {group} | p-value: {result.pvalue} | Duration: {duration:.2f} minutes')
 
         except Exception as ex:
             print(f'failed to calculate the p-value for group {group}: {ex}')
