@@ -188,7 +188,7 @@ def permutation_test_median(data, category_column, reference_group, tested_param
         except Exception as ex:
             print(f'failed to calculate the p-value for group {group}: {ex}')
             groups.append(group)
-            p_values.append(np.NaN)
+            p_values.append(np.nan)
 
     significance = pd.DataFrame({'group': groups,
                                  'p_value': p_values})
@@ -206,14 +206,17 @@ def permutation_test_median(data, category_column, reference_group, tested_param
     ##export (avod re-runs of the permutation test function)
     if kwargs.get('export', False):
         from pathlib import Path
-        if not kwargs.get('path'):
-            raise ValueError("export path must be provided.")
-        output_path = Path(kwargs.get('path'))
-        if not output_path.parent.is_dir():
-            raise FileNotFoundError(f"directory does not exist: {output_path.parent}")
-        try:
-            significance.to_csv(output_path, index=False, encoding='utf-8')
-        except Exception as ex:
-            raise OSError(f"Failed to export plot to '{kwargs.get('path')}': {ex}")
+
+        path = kwargs.get('path')
+
+        if not path:
+            raise ValueError("Export path must be provided.")
+
+        output_path = Path(path)
+
+        if not output_path.parent.exists():
+            raise FileNotFoundError(f"Directory does not exist: {output_path.parent}")
+
+        significance.to_csv(output_path, index=False, encoding='utf-8')
 
     return significance
